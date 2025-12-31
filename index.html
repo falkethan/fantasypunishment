@@ -1,0 +1,911 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Eli’s Loser Tracker 🍻</title>
+  <style>
+    :root{
+      --bg:#0b0f19;
+      --card:#111827;
+      --muted:#9ca3af;
+      --text:#e5e7eb;
+      --border: rgba(255,255,255,.10);
+      --soft: rgba(255,255,255,.05);
+      --good:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: radial-gradient(1200px 600px at 20% 10%, #1f2937, transparent), var(--bg);
+      color: var(--text);
+    }
+    .wrap{ max-width: 980px; margin: 24px auto; padding: 0 16px 80px; }
+    h1{ margin: 8px 0 0; font-size: 28px; letter-spacing: .2px; }
+    .sub{ color: var(--muted); margin: 6px 0 10px; }
+
+    .grid{ display:grid; gap: 14px; grid-template-columns: 1.2fr 1fr; }
+    @media (max-width: 880px){ .grid{ grid-template-columns:1fr; } }
+
+    .card{
+      background: rgba(17,24,39,.85);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+
+    .row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+    .spaced{ justify-content: space-between; }
+
+    label{ font-size: 12px; color: var(--muted); display:block; margin-bottom: 6px; }
+    input, select, button{
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.22);
+      color: var(--text);
+      padding: 10px 12px;
+      font-size: 14px;
+      outline:none;
+    }
+
+    .tag{
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      color: var(--muted);
+      background: rgba(255,255,255,.03);
+      display:flex;
+      gap:8px;
+      align-items:center;
+      white-space:nowrap;
+    }
+    .tag.good{ color:#86efac; border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.10); }
+    .tag.warn{ color:#fde68a; border-color: rgba(245,158,11,.35); background: rgba(245,158,11,.10); }
+    .tag.bad{  color:#fca5a5; border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.10); }
+
+    /* Big status banner */
+    .banner{
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      display:flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .banner .left{
+      display:flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .banner .title{
+      font-weight: 900;
+      font-size: 14px;
+      letter-spacing:.2px;
+    }
+    .banner .desc{
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .banner.good{ border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.10); }
+    .banner.warn{ border-color: rgba(245,158,11,.35); background: rgba(245,158,11,.10); }
+    .banner.bad{  border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.10); }
+
+    /* Icon controls */
+    .controls{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+    @media (max-width: 520px){ .controls{ grid-template-columns: repeat(2,1fr); } }
+
+    .iconBtn{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-direction: column;
+      gap: 6px;
+      padding: 14px 10px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      cursor:pointer;
+      transition: transform .05s ease, background .2s ease, border-color .2s ease;
+      user-select:none;
+    }
+    .iconBtn:hover{ background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.18); }
+    .iconBtn:active{ transform: translateY(1px); }
+    .icon{ font-size: 26px; line-height: 1; }
+    .iconLabel{ font-size: 12px; color: var(--muted); }
+
+    .miniBtns{ display:flex; gap:10px; margin-top: 12px; flex-wrap:wrap; }
+    .miniBtn{
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.12);
+      cursor:pointer;
+      font-weight: 650;
+    }
+    .miniBtn:active{ transform: translateY(1px); }
+    .miniBtn.red{ border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.10); }
+    .miniBtn.gray{ border-color: rgba(156,163,175,.25); background: rgba(156,163,175,.08); }
+
+    .kpi{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+    @media (max-width: 520px){ .kpi{ grid-template-columns:1fr; } }
+    .k{
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+    }
+    .k .t{ color: var(--muted); font-size: 12px; }
+    .k .v{ font-size: 22px; font-weight: 800; margin-top: 4px; }
+
+    /* Bigger progress */
+    .progressWrap{ margin-top: 14px; }
+    .progressMeta{ display:flex; justify-content: space-between; align-items:center; gap: 10px; margin-bottom: 10px; }
+    .progress{
+      height: 18px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+      overflow:hidden;
+      width: 100%;
+    }
+    .bar{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(34,197,94,.85), rgba(59,130,246,.75));
+    }
+
+    .pill{
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      font-size: 13px;
+    }
+
+    /* Pace gauge */
+    .gauge{
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+    }
+    .gTop{ display:flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+    .gTitle{ font-weight: 850; font-size: 13px; }
+    .gNums{ color: var(--muted); font-size: 12px; text-align:right; }
+    .gBar{
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+      overflow:hidden;
+      margin-top: 10px;
+      position: relative;
+    }
+    .gFill{
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, rgba(239,68,68,.75), rgba(245,158,11,.75), rgba(34,197,94,.75));
+    }
+    .gNeedMark{
+      position:absolute;
+      top:-2px;
+      width:2px;
+      height:16px;
+      background: rgba(255,255,255,.65);
+      left: 50%;
+      border-radius: 99px;
+      opacity:.8;
+    }
+    .gNote{ margin-top: 8px; color: var(--muted); font-size: 12px; display:flex; justify-content: space-between; gap: 10px; }
+
+    .log{ max-height: 560px; overflow:auto; padding-right: 4px; margin-top: 12px; }
+    .logitem{
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.06);
+      background: rgba(0,0,0,.16);
+      margin-bottom: 8px;
+    }
+    .logitem b{ font-weight: 800; }
+    .right{ text-align:right; color: var(--muted); font-size: 12px; }
+    .small{ color: var(--muted); font-size: 12px; }
+
+    .targets{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+    .targetBtn{
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      cursor:pointer;
+      font-weight: 700;
+    }
+
+    /* Tabs (mobile-first) */
+    .tabs{
+      margin-top: 12px;
+      display:flex;
+      gap:10px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.10);
+      padding: 6px;
+      border-radius: 999px;
+      width: fit-content;
+    }
+    .tabBtn{
+      border: 0;
+      background: transparent;
+      padding: 10px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      color: var(--muted);
+      font-weight: 800;
+    }
+    .tabBtn.active{
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .tabPane{ display:block; }
+    .tabPane.hidden{ display:none; }
+
+    /* On mobile: use tabs to show one pane at a time */
+    @media (max-width: 880px){
+      .grid{ grid-template-columns:1fr; }
+      .tabsSticky{
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        padding-top: 8px;
+        background: linear-gradient(180deg, rgba(11,15,25,.95), rgba(11,15,25,.60), transparent);
+        backdrop-filter: blur(8px);
+      }
+    }
+    .tabsBar{
+  margin-top: 12px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.viewerTag{
+  margin-left: auto;          /* pushes it to the right, *next to* the tabs bar */
+}
+
+@media (max-width: 520px){
+  .tabsBar{ gap:8px; }
+  .viewerTag .small{ display:none; }  /* shows just 👀 + number on tiny screens */
+}
+
+
+    .confetti{ position: fixed; inset: 0; pointer-events:none; display:none; }
+  </style>
+</head>
+<body>
+  <canvas class="confetti" id="confetti"></canvas>
+
+  <div class="wrap">
+    <h1>Eli’s Loser Tracker 🍻</h1>
+    <div class="sub">Each beer = 30 minutes. Each shot = 30 minutes.</div>
+
+    <!-- Tabs (mobile clarity) -->
+    <div class="tabsSticky">
+  <div class="tabsBar">
+    <div class="tabs" role="tablist" aria-label="Views">
+      <button class="tabBtn active" id="tabOverview" aria-selected="true">Overview</button>
+      <button class="tabBtn" id="tabLog" aria-selected="false">Beer Log</button>
+    </div>
+
+    <div class="tag viewerTag" title="Live viewers (approx)">
+      👀 <b id="viewerCount">—</b><span class="small">watching</span>
+    </div>
+  </div>
+</div>
+
+
+    <div class="grid">
+      <!-- Left: tracker / Overview -->
+      <div class="card tabPane" id="paneOverview">
+        <div class="row spaced">
+          <div class="tag">Bar: <b>Eli’s (Mason, OH)</b></div>
+
+          <div class="row" style="gap:8px;">
+            <button class="miniBtn gray" id="hostBtn" title="Only host can update">Host sign-in</button>
+            <div class="tag" id="statusTag">Behind pace 😬</div>
+          </div>
+        </div>
+
+        <!-- Big status banner -->
+        <div class="banner warn" id="statusBanner">
+          <div class="left">
+            <div class="title" id="bannerTitle">Behind pace 😬</div>
+            <div class="desc" id="bannerDesc">Pick a target (7/8/9pm) to see needed pace.</div>
+          </div>
+          <div class="tag" id="bannerChip">—</div>
+        </div>
+
+        <div style="height:12px"></div>
+
+        <div class="row">
+          <div style="flex:1; min-width: 160px;">
+            <label>Date</label>
+            <input id="date" type="date" />
+          </div>
+          <div style="flex:1; min-width: 160px;">
+            <label>Start</label>
+            <input id="startTime" type="time" value="11:00" />
+          </div>
+          <div style="flex:1; min-width: 160px;">
+            <label>Close</label>
+            <input id="closeTime" type="time" value="02:00" />
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="iconBtn" id="beerBtn" title="Add Beer (-30m)">
+            <div class="icon">🍺</div>
+            <div class="iconLabel">Beer (-30m)</div>
+          </div>
+          <div class="iconBtn" id="shotBtn" title="Add Shot (-30m)">
+            <div class="icon">🥃</div>
+            <div class="iconLabel">Shot (-30m)</div>
+          </div>
+          <div class="iconBtn" id="waterBtn" title="Add Water">
+            <div class="icon">💧</div>
+            <div class="iconLabel">Water</div>
+          </div>
+          <div class="iconBtn" id="foodBtn" title="Add Food">
+            <div class="icon">🍔</div>
+            <div class="iconLabel">Food</div>
+          </div>
+        </div>
+
+        <div class="miniBtns">
+          <button class="miniBtn red" id="undoBtn">Undo</button>
+          <button class="miniBtn gray" id="resetBtn">Reset</button>
+        </div>
+
+        <div class="kpi">
+          <div class="k">
+            <div class="t">Time earned</div>
+            <div class="v" id="earned">0h 0m</div>
+          </div>
+          <div class="k">
+            <div class="t">You’re free at</div>
+            <div class="v" id="freeAt">—</div>
+          </div>
+          <div class="k">
+            <div class="t">Time remaining</div>
+            <div class="v" id="remaining">—</div>
+          </div>
+        </div>
+
+        <div class="progressWrap">
+          <div class="progressMeta">
+            <div class="small">Progress to freedom</div>
+            <div class="targets">
+              <button class="targetBtn" data-target="19:00">7pm</button>
+              <button class="targetBtn" data-target="20:00">8pm</button>
+              <button class="targetBtn" data-target="21:00">9pm</button>
+            </div>
+          </div>
+          <div class="progress">
+            <div class="bar" id="progBar"></div>
+          </div>
+        </div>
+
+        <div style="height:12px"></div>
+
+        <div class="row spaced">
+          <div class="pill">🍺 <b id="beerCount">0</b> &nbsp; 🥃 <b id="shotCount">0</b> &nbsp; 💧 <b id="waterCount">0</b> &nbsp; 🍔 <b id="foodCount">0</b></div>
+          <div class="pill">Needed pace: <b id="pace">Set a target</b></div>
+        </div>
+
+        <!-- Drinks/hr gauge -->
+        <div class="gauge">
+          <div class="gTop">
+            <div class="gTitle">Drinks / hour</div>
+            <div class="gNums">
+              Current: <b id="curDPH">—</b><br/>
+              Needed: <b id="needDPH">—</b>
+            </div>
+          </div>
+          <div class="gBar">
+            <div class="gFill" id="gFill"></div>
+            <div class="gNeedMark" id="gNeedMark" title="Needed pace"></div>
+          </div>
+          <div class="gNote">
+            <span id="dphNote">Pick a target to compute needed pace.</span>
+            <span class="small" id="dphEmoji">—</span>
+          </div>
+        </div>
+
+        <div style="height:8px"></div>
+        <div class="small" id="modeNote">Spectator mode (read-only). Host must sign in to update.</div>
+      </div>
+
+      <!-- Right: Beer Log -->
+      <div class="card tabPane" id="paneLog">
+        <div class="row spaced">
+          <b>Beer Log</b>
+          <span class="small">Live updates for everyone</span>
+        </div>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+  </div>
+
+
+  
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import {
+    getFirestore,
+    doc, getDoc, setDoc, updateDoc, onSnapshot, serverTimestamp,
+    collection, setDoc as setDoc2, deleteDoc, getDocs, query, where
+  } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyBLeHPkum5eOCzpc3PlN7O-ivb30ro9OB8",
+    authDomain: "fantasypunishment.firebaseapp.com",
+    projectId: "fantasypunishment",
+    storageBucket: "fantasypunishment.firebasestorage.app",
+    messagingSenderId: "1013410758828",
+    appId: "1:1013410758828:web:72190bc04e4492f0129f09",
+    measurementId: "G-B20VM5MZR5"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const $ = (id) => document.getElementById(id);
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function fmtHM(mins){ const h=Math.floor(mins/60), m=mins%60; return `${h}h ${m}m`; }
+  function parseTimeToMinutes(t){ if(!t) return 0; const [hh,mm]=t.split(':').map(Number); return hh*60+mm; }
+  function minutesToTimeStr(mins){
+    mins=((mins%1440)+1440)%1440;
+    const hh=Math.floor(mins/60), mm=mins%60;
+    const suffix=hh>=12?'PM':'AM';
+    const hr12=((hh+11)%12)+1;
+    return `${hr12}:${pad(mm)} ${suffix}`;
+  }
+  function nowMinutes(){ const d=new Date(); return d.getHours()*60+d.getMinutes(); }
+  function defaultDate(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+  function randId(len=16){
+    const chars="abcdefghijklmnopqrstuvwxyz0123456789";
+    let s="";
+    for(let i=0;i<len;i++) s+=chars[Math.floor(Math.random()*chars.length)];
+    return s;
+  }
+
+  // Live tracker doc
+  const trackerId = "elis_main";
+  const trackerRef = doc(db, "trackers", trackerId);
+
+  // Presence (viewer count)
+  const presenceCol = collection(db, "trackers", trackerId, "presence");
+  const viewerIdKey = `viewer_${trackerId}`;
+  const viewerId = localStorage.getItem(viewerIdKey) || (()=>{ const v=randId(); localStorage.setItem(viewerIdKey, v); return v; })();
+  const presenceRef = doc(db, "trackers", trackerId, "presence", viewerId);
+
+  // State
+  const state = { events: [], beer:0, shot:0, water:0, food:0 };
+  window._targetLeave = "21:00";
+  let canWrite = false;
+
+  function totalBarMinutes(){
+    const start=parseTimeToMinutes($('startTime').value);
+    let close=parseTimeToMinutes($('closeTime').value);
+    if(close<=start) close+=1440;
+    return close-start;
+  }
+  function earnedMinutes(){ return state.events.reduce((a,e)=>a+(e.deltaMinutes||0),0); }
+  function freeAtMinutes(){
+    const start=parseTimeToMinutes($('startTime').value);
+    return start + (totalBarMinutes() - earnedMinutes());
+  }
+  function remainingMinutesFromNow(){
+    const start=parseTimeToMinutes($('startTime').value);
+    let now=nowMinutes();
+    let nowTimeline=now;
+    if(now<start) nowTimeline+=1440;
+
+    let free=freeAtMinutes();
+    let freeTimeline=free;
+    if(freeTimeline<start) freeTimeline+=1440;
+
+    return Math.max(0, freeTimeline-nowTimeline);
+  }
+
+  function setModeUI(){
+    const disable = !canWrite;
+    ["beerBtn","shotBtn","waterBtn","foodBtn"].forEach(id=>{
+      $(id).style.pointerEvents = disable ? "none" : "auto";
+      $(id).style.opacity = disable ? "0.55" : "1";
+    });
+    $("undoBtn").disabled = disable;
+    $("resetBtn").disabled = disable;
+    $("startTime").disabled = disable;
+    $("closeTime").disabled = disable;
+    $("date").disabled = disable;
+
+    $("modeNote").textContent = canWrite
+      ? "Host mode ✅ (you can update). Everyone else is read-only."
+      : "Spectator mode (read-only). Host must sign in to update.";
+
+    $("hostBtn").textContent = canWrite ? "Sign out" : "Host sign-in";
+  }
+
+  async function safeUpdate(patch){
+    if(!canWrite) return;
+    await updateDoc(trackerRef, { ...patch, updatedAt: serverTimestamp() });
+  }
+
+  async function addEvent(type){
+    if(!canWrite) return;
+    const iso=new Date().toISOString();
+    let delta=0;
+    if(type==='beer'){ delta=30; state.beer++; }
+    if(type==='shot'){ delta=30; state.shot++; }
+    if(type==='water'){ delta=0; state.water++; }
+    if(type==='food'){ delta=0; state.food++; }
+
+    state.events.unshift({type, deltaMinutes:delta, atISO:iso});
+    state.events = state.events.slice(0, 250);
+
+    await safeUpdate({
+      beer: state.beer, shot: state.shot, water: state.water, food: state.food,
+      events: state.events
+    });
+    render();
+  }
+
+  async function undo(){
+    if(!canWrite) return;
+    const e=state.events.shift();
+    if(!e) return;
+    if(e.type==='beer') state.beer--;
+    if(e.type==='shot') state.shot--;
+    if(e.type==='water') state.water--;
+    if(e.type==='food') state.food--;
+    await safeUpdate({
+      beer: state.beer, shot: state.shot, water: state.water, food: state.food,
+      events: state.events
+    });
+    render();
+  }
+
+  async function resetAll(){
+    if(!canWrite) return;
+    state.events=[]; state.beer=state.shot=state.water=state.food=0;
+    await safeUpdate({ beer:0, shot:0, water:0, food:0, events: [] });
+    render();
+  }
+
+  // Confetti
+  let confettiFired=false;
+  function fireConfetti(){
+    if(confettiFired) return;
+    confettiFired=true;
+    const canvas=$('confetti');
+    canvas.style.display='block';
+    const ctx=canvas.getContext('2d');
+    const W=canvas.width=window.innerWidth;
+    const H=canvas.height=window.innerHeight;
+    const pieces=Array.from({length:140},() => ({
+      x:Math.random()*W, y:-20-Math.random()*H*0.3,
+      r:4+Math.random()*5, vy:2+Math.random()*5, vx:-2+Math.random()*4,
+      rot:Math.random()*Math.PI, vr:-0.2+Math.random()*0.4
+    }));
+    let t=0;
+    (function step(){
+      t++;
+      ctx.clearRect(0,0,W,H);
+      pieces.forEach(p=>{
+        p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr;
+        ctx.save();
+        ctx.translate(p.x,p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle=`hsla(${(p.x/W)*360},90%,60%,.9)`;
+        ctx.fillRect(-p.r,-p.r,p.r*2,p.r*2);
+        ctx.restore();
+      });
+      if(t<220) requestAnimationFrame(step);
+      else canvas.style.display='none';
+    })();
+  }
+
+  // Viewer presence: heartbeat + cleanup
+  async function heartbeat(){
+    try{
+      await setDoc2(presenceRef, {
+        lastSeen: Date.now(),
+        ua: navigator.userAgent.slice(0,120)
+      }, { merge:true });
+    } catch(e){}
+  }
+
+  // Live viewer count
+  async function refreshViewerCount(){
+    try{
+      const cutoff = Date.now() - 45_000; // 45s window
+      const q = query(presenceCol, where("lastSeen", ">", cutoff));
+      const snap = await getDocs(q);
+      $("viewerCount").textContent = snap.size;
+    } catch(e){
+      $("viewerCount").textContent = "—";
+    }
+  }
+
+  // Compute DPH
+  function computeDPH(){
+    const start=parseTimeToMinutes($('startTime').value);
+    let now=nowMinutes();
+    let nowTimeline=now;
+    if(now<start) nowTimeline+=1440;
+    const minsElapsed = Math.max(0, nowTimeline - start);
+
+    const drinkCount = state.beer + state.shot; // treat shot+beer as "a drink" for gauge
+    const hours = minsElapsed/60;
+    const cur = hours>0 ? (drinkCount/hours) : 0;
+
+    // Needed DPH based on target
+    let targ=parseTimeToMinutes(window._targetLeave);
+    if(targ<=start) targ+=1440;
+
+    const desiredStay = targ - start;
+    const total = totalBarMinutes();
+    const needEarn = Math.max(0, total - desiredStay);         // minutes to earn to hit target
+    const earned = earnedMinutes();
+    const remainingEarn = Math.max(0, needEarn - earned);
+    const itemsNeeded = Math.ceil(remainingEarn / 30);         // 30m per item
+    const remainingRealMins = Math.max(0, targ - nowTimeline);
+    const remainingHours = remainingRealMins/60;
+    const need = remainingHours>0 ? (itemsNeeded/remainingHours) : (itemsNeeded);
+
+    return { cur, need, itemsNeeded };
+  }
+
+  function setBanner(status, chipText, desc){
+    const banner = $("statusBanner");
+    banner.className = `banner ${status}`;
+    $("bannerTitle").textContent = chipText;
+    $("bannerDesc").textContent = desc;
+    const chip = $("bannerChip");
+    chip.textContent = status === "good" ? "✅" : status === "warn" ? "⚠️" : "🚨";
+    chip.className = `tag ${status}`;
+  }
+
+  function render(){
+    $('beerCount').textContent=state.beer;
+    $('shotCount').textContent=state.shot;
+    $('waterCount').textContent=state.water;
+    $('foodCount').textContent=state.food;
+
+    const earned=earnedMinutes();
+    $('earned').textContent=fmtHM(earned);
+
+    const freeAt=freeAtMinutes();
+    $('freeAt').textContent=minutesToTimeStr(freeAt);
+
+    const rem=remainingMinutesFromNow();
+    $('remaining').textContent=fmtHM(rem);
+
+    const total=totalBarMinutes();
+    const prog=Math.min(100, Math.max(0, (earned/total)*100));
+    $('progBar').style.width=`${prog}%`;
+
+    // Status: "on pace" if freeAt <= target
+    const tag=$('statusTag');
+    const start=parseTimeToMinutes($('startTime').value);
+    let targ=parseTimeToMinutes(window._targetLeave);
+    if(targ<=start) targ+=1440;
+
+    let freeTimeline=freeAt;
+    if(freeTimeline<start) freeTimeline+=1440;
+
+    const totalNeededDesc = `Target: ${window._targetLeave.replace(":00","")}`;
+
+    if(earned>=total){
+      tag.textContent='FREE ✅';
+      tag.className='tag good';
+      fireConfetti();
+      setBanner("good", "YOU’RE FREE ✅", "No more drinks required. Respectfully exit the premises.");
+    } else if(freeTimeline<=targ){
+      tag.textContent='On pace 😈';
+      tag.className='tag good';
+      setBanner("good", "ON PACE ✅", `${totalNeededDesc}. Keep steady, don’t get sloppy.`);
+    } else {
+      tag.textContent='Behind pace 😬';
+      tag.className='tag warn';
+      setBanner("warn", "BEHIND PACE ⚠️", `${totalNeededDesc}. You’re drifting… pick it up (responsibly).`);
+    }
+
+    // Pace calc (existing)
+    const desiredStay = targ - start;
+    const needEarn = Math.max(0, total - desiredStay);
+    const remainingEarn = Math.max(0, needEarn - earned);
+    const itemsNeeded = Math.ceil(remainingEarn / 30);
+
+    let now=nowMinutes();
+    let nowTimeline=now;
+    if(now<start) nowTimeline+=1440;
+    const remainingReal = Math.max(0, targ - nowTimeline);
+    const hoursLeft = remainingReal/60;
+
+    const rate = hoursLeft>0 ? (itemsNeeded/hoursLeft) : itemsNeeded;
+    $('pace').textContent = window._targetLeave ? `${itemsNeeded} left (~${rate.toFixed(2)}/hr)` : 'Set a target';
+
+    // Log
+    const log=$('log');
+    log.innerHTML = state.events.slice(0,80).map(e=>{
+      const d=new Date(e.atISO);
+      const ts=minutesToTimeStr(d.getHours()*60 + d.getMinutes());
+      const emoji = e.type==='beer'?'🍺': e.type==='shot'?'🥃': e.type==='water'?'💧':'🍔';
+      const name  = e.type==='beer'?'Beer': e.type==='shot'?'Shot': e.type==='water'?'Water':'Food';
+      const delta = e.deltaMinutes ? `-${e.deltaMinutes}m` : '—';
+      return `
+        <div class="logitem">
+          <div><b>${emoji} ${name}</b> <span class="small">${delta}</span></div>
+          <div class="right">${ts}</div>
+        </div>
+      `;
+    }).join('');
+
+    // DPH gauge
+    const {cur, need, itemsNeeded: needItems} = computeDPH();
+    $("curDPH").textContent = cur ? cur.toFixed(2) : "0.00";
+    $("needDPH").textContent = (Number.isFinite(need) ? need.toFixed(2) : "—");
+
+    // Gauge fill based on current, clamp 0..3.5 as "visual max"
+    const max = 3.5;
+    const pct = Math.max(0, Math.min(100, (cur/max)*100));
+    $("gFill").style.width = `${pct}%`;
+
+    // Needed mark
+    const needPct = Number.isFinite(need) ? Math.max(0, Math.min(100, (need/max)*100)) : 50;
+    $("gNeedMark").style.left = `${needPct}%`;
+
+    let emoji = "—";
+    let note = "Pick a target to compute needed pace.";
+    if(Number.isFinite(need)){
+      if(cur >= need){ emoji = "✅"; note = `Good. Stay around ${need.toFixed(2)}/hr. (${needItems} item(s) left)`; }
+      else { emoji = "⚠️"; note = `Behind. Need ~${need.toFixed(2)}/hr. (${needItems} item(s) left)`; }
+    }
+    $("dphEmoji").textContent = emoji;
+    $("dphNote").textContent = note;
+  }
+
+  // Tabs
+  function setTab(which){
+    const isOverview = which === "overview";
+    $("paneOverview").classList.toggle("hidden", !isOverview);
+    $("paneLog").classList.toggle("hidden", isOverview);
+    $("tabOverview").classList.toggle("active", isOverview);
+    $("tabLog").classList.toggle("active", !isOverview);
+    $("tabOverview").setAttribute("aria-selected", String(isOverview));
+    $("tabLog").setAttribute("aria-selected", String(!isOverview));
+  }
+  $("tabOverview").addEventListener("click", ()=>setTab("overview"));
+  $("tabLog").addEventListener("click", ()=>setTab("log"));
+
+  // Firestore live subscription
+  onSnapshot(trackerRef, (snap)=>{
+    if(!snap.exists()) return;
+    const d = snap.data();
+
+    state.beer = d.beer ?? 0;
+    state.shot = d.shot ?? 0;
+    state.water = d.water ?? 0;
+    state.food = d.food ?? 0;
+    state.events = d.events ?? [];
+
+    if(d.start) $('startTime').value = d.start;
+    if(d.close) $('closeTime').value = d.close;
+    if(d.date) $('date').value = d.date;
+    if(d.target) window._targetLeave = d.target;
+
+    render();
+  });
+
+  // Auth / host ownership
+  const provider = new GoogleAuthProvider();
+
+  async function ensureTrackerDoc(user){
+    const snap = await getDoc(trackerRef);
+    if(!snap.exists()){
+      await setDoc(trackerRef, {
+        ownerUid: user.uid,
+        date: defaultDate(),
+        start: $('startTime').value,
+        close: $('closeTime').value,
+        target: window._targetLeave,
+        beer: 0, shot: 0, water: 0, food: 0,
+        events: [],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    }
+  }
+
+  onAuthStateChanged(auth, async (user)=>{
+    if(user){
+      await ensureTrackerDoc(user);
+      const snap = await getDoc(trackerRef);
+      canWrite = !!snap.exists() && snap.data().ownerUid === user.uid;
+    } else {
+      canWrite = false;
+    }
+    setModeUI();
+  });
+
+  $('hostBtn').addEventListener('click', async ()=>{
+    if(canWrite){
+      await signOut(auth);
+      return;
+    }
+    await signInWithPopup(auth, provider);
+  });
+
+  // Wire up
+  $('beerBtn').addEventListener('click', ()=>addEvent('beer'));
+  $('shotBtn').addEventListener('click', ()=>addEvent('shot'));
+  $('waterBtn').addEventListener('click', ()=>addEvent('water'));
+  $('foodBtn').addEventListener('click', ()=>addEvent('food'));
+  $('undoBtn').addEventListener('click', undo);
+  $('resetBtn').addEventListener('click', resetAll);
+
+  document.querySelectorAll('button[data-target]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      window._targetLeave = btn.dataset.target;
+      render();
+      await safeUpdate({ target: window._targetLeave });
+    });
+  });
+
+  $('startTime').addEventListener('change', async ()=>{ render(); await safeUpdate({ start: $('startTime').value }); });
+  $('closeTime').addEventListener('change', async ()=>{ render(); await safeUpdate({ close: $('closeTime').value }); });
+  $('date').addEventListener('change', async ()=>{ await safeUpdate({ date: $('date').value }); });
+
+  // Init
+  $('date').value = defaultDate();
+  setModeUI();
+  setTab("overview");
+  render();
+  setInterval(render, 20_000);
+
+  // Presence heartbeat + viewer count refresh
+  heartbeat();
+  refreshViewerCount();
+  setInterval(heartbeat, 15_000);
+  setInterval(refreshViewerCount, 10_000);
+
+  // Best-effort cleanup when leaving
+  window.addEventListener("beforeunload", async ()=>{
+    try{ await deleteDoc(presenceRef); }catch(e){}
+  });
+</script>
+</body>
+</html>
